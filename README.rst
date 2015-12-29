@@ -4,8 +4,8 @@ FLOTILS
 Some utility functions and classes I use in many projects.
 
 
-logable
-=======
+flotils.logable
+===============
 Module to ease logging efforts
 
 
@@ -52,6 +52,7 @@ optionally an id. They also expose all logging calls of a logger
   demo1.work_on_something_else()
 
 *Output*
+
 ::
 
   >> DEBUG:Demo:working on something
@@ -72,6 +73,7 @@ and with an id:
     demo2.work_on_something_else()
 
 *Output*
+
 ::
 
   >> DEBUG:Demo.demo2:working on something
@@ -96,6 +98,7 @@ and with id and default_logging_config:
     demo3.work_on_something_else()
 
 *Output*
+
 ::
 
   >> 2015-12-27 20:30:48 DEBUG   [Demo.demo2.work_on_something] working on something
@@ -121,6 +124,7 @@ Same as ``Logable``, but used for module level logging
   logger.info("Greetings from module")
 
 *Output*
+
 ::
 
   >> 2015-12-27 20:41:43 INFO    [__main__] Greetings from module

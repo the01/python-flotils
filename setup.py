@@ -23,10 +23,16 @@ def get_file(path):
     with open(path, 'r') as f:
         return f.read()
 
+
 version = get_version()
 readme = get_file("README.rst")
 history = get_file("HISTORY.rst")
 requirements = get_file("requirements.txt").split("\n")
+
+assert version is not None
+assert readme is not None
+assert history is not None
+assert requirements is not None
 
 setup(
     name="flotils",
@@ -48,6 +54,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7"
+        "Programming Language :: Python :: 2.7",
     ]
 )
