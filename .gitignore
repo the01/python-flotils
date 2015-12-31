@@ -50,3 +50,6 @@ docs/_build
 ._*
 .idea/
 cache/
+
+docs/*.pdf
+docs/*.html

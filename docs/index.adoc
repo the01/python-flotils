@@ -1,0 +1,23 @@
+= flotils
+Florian Jung
+v0.0.1, 2015-12-31
+:doctype: book
+:encoding: utf-8
+:lang: en
+:toc: left
+:sectnums:
+:chapter-label:
+:pdf-page-size: A4
+:source-highlighter: pygments
+
+Version {revnumber} from {revdate}
+
+Some utility functions and classes I use in many projects.
+
+*Note:* This package does not follow the UNIX philosophy. (It does more than
+one thing).
+Though some modules might get moved to their own packages in the future,
+this is currently not planned.
+
+
+include::logable.adoc[]

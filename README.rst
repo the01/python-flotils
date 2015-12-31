@@ -3,129 +3,80 @@ FLOTILS
 
 Some utility functions and classes I use in many projects.
 
+**Note:** This package does not follow the UNIX philosophy. (It does more than
+one thing).
+Though some modules might get moved to their own packages in the future,
+this is currently not planned.
 
-flotils.logable
-===============
+
+logable
+=======
 Module to ease logging efforts
 
+**Supports**
 
-default_logging_config
-----------------------
-Dict with my default configuration (includes function logging and,
-if installed, colorlog).
+* Using logging calls directly on instance
+* Module logger
+* Optional instance id
+* Add method information to log
+* Default logging config
 
-Use ``logging.config.dictConfig(default_logging_config)``
-
-
-Logable
--------
-Class to facilitate clean logging with class/function/id information
-
-Inherited classes have a name property consisting of the class name and
-optionally an id. They also expose all logging calls of a logger
-(``.debug()``, ``.warning()``, ``.exception()``,..)
-
-
-**Example**
-
-.. code-block:: python
-
-  from flotils.logable import Logable
-
-  class Demo(Loadable):
-
-    def work_on_something(self):
-        # do something
-        self.debug("working on something")
-        self.info("Finished working")
-
-    def work_on_something_else(self):
-        self.warning("Something might go wrong")
-        self.error("Something went wrong")
-        self.warning("Told you!")
-
-  import logging
-  logging.basicConfig(level=logging.DEBUG)
-  demo1 = Demo()
-  demo1.work_on_something()
-  logging.debug("Inbetween")
-  demo1.work_on_something_else()
-
-*Output*
+In ``class Demo(Logable)`` you are able to use the logging calls directly
+(eg. ``self.debug()``, ``self.warning()``, ``self.exception()``,..) to produce 
+structured logging output like
 
 ::
 
-  >> DEBUG:Demo:working on something
-     INFO:Demo:Finished working
-     DEBUG:root:Inbetween
-     WARNING:Demo:Something might go wrong
-     ERROR:Demo:Something went wrong
-     WARNING:Demo:Told you!
+ DEBUG:Demo:working on something
+ INFO:Demo:Finished working
+ DEBUG:root:Inbetween
+ WARNING:Demo:Something might go wrong
+ ERROR:Demo:Something went wrong
+ WARNING:Demo:Told you!
 
-
-and with an id:
-
-.. code-block:: python
-
-    demo2 = Demo({'id': "demo2"})
-    demo2.work_on_something()
-    logging.debug("Inbetween")
-    demo2.work_on_something_else()
-
-*Output*
+The ``Logable`` class allows you to specify an id for an instance 
+``Demo({'id': "demo2"})`` resulting in
 
 ::
 
-  >> DEBUG:Demo.demo2:working on something
-     INFO:Demo.demo2:Finished working
-     DEBUG:root:Inbetween
-     WARNING:Demo.demo2:Something might go wrong
-     ERROR:Demo.demo2:Something went wrong
-     WARNING:Demo.demo2:Told you!
+ DEBUG:Demo.demo2:working on something
+ INFO:Demo.demo2:Finished working
+ DEBUG:root:Inbetween
+ WARNING:Demo.demo2:Something might go wrong
+ ERROR:Demo.demo2:Something went wrong
+ WARNING:Demo.demo2:Told you!
 
-and with id and default_logging_config:
-
-.. code-block:: python
-
-    import logging.config
-    from flotils.logable import default_logging_config
-    logging.config.dictConfig(default_logging_config)
-    logging.getLogger().setLevel(logging.DEBUG)
-
-    demo3 = Demo({'id': "demo3"})
-    demo3.work_on_something()
-    logging.debug("Inbetween")
-    demo3.work_on_something_else()
-
-*Output*
+Also supports method information:
 
 ::
 
-  >> 2015-12-27 20:30:48 DEBUG   [Demo.demo2.work_on_something] working on something
-     2015-12-27 20:30:48 INFO    [Demo.demo2.work_on_something] Finished working
-     2015-12-27 20:30:48 DEBUG   [root] Inbetween
-     2015-12-27 20:30:48 WARNING [Demo.demo2.work_on_something_else] Something might go wrong
-     2015-12-27 20:30:48 ERROR   [Demo.demo2.work_on_something_else] Something went wrong
-     2015-12-27 20:30:48 WARNING [Demo.demo2.work_on_something_else] Told you!
+ 2015-12-27 20:30:48 DEBUG   [Demo.demo2.work_on_something] working on something
+ 2015-12-27 20:30:48 INFO    [Demo.demo2.work_on_something] Finished working
+ 2015-12-27 20:30:48 DEBUG   [root] Inbetween
+ 2015-12-27 20:30:48 WARNING [Demo.demo2.work_on_something_else] Something might go wrong
+ 2015-12-27 20:30:48 ERROR   [Demo.demo2.work_on_something_else] Something went wrong
+ 2015-12-27 20:30:48 WARNING [Demo.demo2.work_on_something_else] Told you!
+
+For information on how to enable this, please have a look at
+``logable.default_logging_config``
 
 
-ModuleLogable
--------------
-Same as ``Logable``, but used for module level logging
+loadable
+========
+Module to ease json(file) efforts
 
-.. code-block:: python
 
-  from flotils.logable import ModuleLogable
+**Supports**
 
-  class Logger(ModuleLogable):
-      pass
+* loading/writing json both as string and file
+* ``date``, ``time`` and ``datetime`` types supported (saved and loaded as utc)
+* class to load/save settings from/to file
 
-  logger = Logger()
-  logger.info("Greetings from module")
+``Loadable`` is a child class of ``Logable``, thus inheriting all logging
+capabilities.
 
-*Output*
+To tell ``class Demo(Loadable)`` to create an instance from a settings file,
+just write ``Demo({'settings_file': "path/to/settings.json"})``.
 
-::
-
-  >> 2015-12-27 20:41:43 INFO    [__main__] Greetings from module
+Settings provided in ``__init__()`` overwrite the ones set in the file.
 
