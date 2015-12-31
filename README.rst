@@ -8,6 +8,8 @@ one thing).
 Though some modules might get moved to their own packages in the future,
 this is currently not planned.
 
+Documentation at
+`GitHub <https://github.com/the01/python-flotils/tree/master/docs>`_
 
 logable
 =======
