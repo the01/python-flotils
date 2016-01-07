@@ -3,6 +3,15 @@ FLOTILS
 
 Some utility functions and classes I use in many projects.
 
+.. image:: https://img.shields.io/pypi/v/flotils.svg   
+    :target: https://pypi.python.org/pypi/flotils
+
+.. image:: https://img.shields.io/pypi/l/flotils.svg   
+    :target: https://pypi.python.org/pypi/flotils
+
+.. image:: https://img.shields.io/pypi/dm/flotils.svg   
+    :target: https://pypi.python.org/pypi/flotils
+
 **Note:** This package does not follow the UNIX philosophy. (It does more than
 one thing).
 Though some modules might get moved to their own packages in the future,
