@@ -91,6 +91,18 @@ just write ``Demo({'settings_file': "path/to/settings.json"})``.
 Settings provided in ``__init__()`` overwrite the ones set in the file.
 
 
+runable
+=======
+Module to ease starting/stoping of classes
+
+**Supports**
+
+* Startable (Class can be started ``start()``) 
+* Stopable (Class can be stopped ``stop()``)
+* StartStopable (``Startable()`` + ``Stopable()``)
+* SignalStopWrapper (Listens for SIGTERM and SIGINT signals and stops the class)
+
+
 webscraper
 ==========
 Module to ease web efforts

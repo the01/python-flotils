@@ -3,6 +3,12 @@
 History
 =======
 
+0.2.13a0 (2016-01-28)
+---------------------
+
+* Runable (Startable, Stopable, StartStopable, SignalStopWrapper)
+
+
 0.2.12a0 (2016-01-07)
 ---------------------
 
