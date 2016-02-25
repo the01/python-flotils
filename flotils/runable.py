@@ -7,8 +7,8 @@ __author__ = "the01"
 __email__ = "jungflor@gmail.com"
 __copyright__ = "Copyright (C) 2015-16, Florian JUNG"
 __license__ = "All rights reserved"
-__version__ = "0.1.1a0"
-__date__ = "2016-01-28"
+__version__ = "0.1.2a0"
+__date__ = "2016-02-25"
 # Created: 2015-06-07 15:00
 
 from abc import ABCMeta, abstractmethod
@@ -38,7 +38,7 @@ class Startable(object):
         """
         if settings is None:
             settings = {}
-        super(Startable, self).__init__(settings)
+        super(Startable, self).__init__()
 
     @abstractmethod
     def start(self):
@@ -66,7 +66,7 @@ class Stopable(object):
         """
         if settings is None:
             settings = {}
-        super(Stopable, self).__init__(settings)
+        super(Stopable, self).__init__()
 
     @abstractmethod
     def stop(self):
