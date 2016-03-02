@@ -5,10 +5,10 @@ Logging utilities
 
 __author__ = "the01"
 __email__ = "jungflor@gmail.com"
-__copyright__ = "Copyright (C) 2013-15, Florian JUNG"
+__copyright__ = "Copyright (C) 2013-16, Florian JUNG"
 __license__ = "MIT"
-__version__ = "0.1.3"
-__date__ = "2015-12-27"
+__version__ = "0.1.4"
+__date__ = "2016-03-02"
 # Created: 2013-03-03 24:00
 
 import logging
@@ -54,6 +54,7 @@ class Logable(object):
         """
         if settings is None:
             settings = {}
+        super(Logable, self).__init__()
         self._id = settings.get('id', None)
         """ instance id """
         self._logger = logging.getLogger(self.name)
@@ -171,7 +172,7 @@ class ModuleLogable(Logable):
     def __init__(self, settings=None):
         if settings is None:
             settings = {}
-        Logable.__init__(self, settings)
+        super(ModuleLogable, self).__init__(settings)
 
     @property
     def name(self):
