@@ -1,14 +1,37 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+# from __future__ import unicode_literals
 
-from setuptools import setup
+__author__ = "d01 <Florian Jung>"
+__email__ = "jungflor@gmail.com"
+__copyright__ = "Copyright (C) 2015-16, Florian JUNG"
+__license__ = "MIT"
+__version__ = "0.1.2"
+__date__ = "2016-04-02"
+# Created: ?
+
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
+import sys
+import os
+import re
+
+
+if sys.argv[-1] == "build":
+    os.system("python setup.py clean sdist bdist bdist_egg bdist_wheel")
 
 
 def get_version():
-    import os
-    import re
+    """
+    Parse the version information from the init file
+    """
     version_file = os.path.join("flotils", "__init__.py")
-    initfile_lines = open(version_file, 'rt').readlines()
+    initfile_lines = open(version_file, "rt").readlines()
     version_reg = r"^__version__ = ['\"]([^'\"]*)['\"]"
     for line in initfile_lines:
         mo = re.search(version_reg, line, re.M)
@@ -20,7 +43,7 @@ def get_version():
 
 
 def get_file(path):
-    with open(path, 'r') as f:
+    with open(path, "r") as f:
         return f.read()
 
 

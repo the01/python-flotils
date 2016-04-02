@@ -3,8 +3,15 @@
 History
 =======
 
+
+0.3.1a0 (2016-03-31)
+--------------------
+
+* Catch interrupt in Stopable.stop() when sleeping
+
+
 0.3.0a0 (2016-03-08)
----------------------
+--------------------
 
 * Move webscraper to own package
 

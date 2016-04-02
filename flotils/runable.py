@@ -7,8 +7,8 @@ __author__ = "the01"
 __email__ = "jungflor@gmail.com"
 __copyright__ = "Copyright (C) 2015-16, Florian JUNG"
 __license__ = "All rights reserved"
-__version__ = "0.1.2a0"
-__date__ = "2016-02-25"
+__version__ = "0.1.1a0"
+__date__ = "2016-03-31"
 # Created: 2015-06-07 15:00
 
 from abc import ABCMeta, abstractmethod
@@ -113,8 +113,12 @@ class StartStopable(Startable, Stopable):
         super(StartStopable, self).start()
         self._is_running = True
         # blocking
-        while blocking and self._is_running:
-            time.sleep(self._start_block_timeout)
+        try:
+            while blocking and self._is_running:
+                time.sleep(self._start_block_timeout)
+        except IOError as e:
+            if not str(e).lower().startswith("[errno 4]"):
+                raise
 
     def stop(self):
         """
