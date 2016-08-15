@@ -4,6 +4,12 @@ History
 =======
 
 
+0.3.2a0 (2016-08-14)
+--------------------
+
+* Add datetime.timedelta to JSONEncoder/Decoder
+
+
 0.3.1a0 (2016-03-31)
 --------------------
 

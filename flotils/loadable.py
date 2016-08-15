@@ -18,13 +18,18 @@ import json
 import dateutil.parser
 from dateutil.tz import tzutc
 
-from logable import Logable
+from logable import Logable, ModuleLogable
 
 
+class Logger(ModuleLogable):
+    pass
+
+
+logger = Logger()
 UTC = tzutc()
 
 
-# TODO: de/encode timedelta in json
+# TODO: New format according to https://gist.github.com/majgis/4200488
 class DateTimeEncoder(json.JSONEncoder):
     """ Encode datetime, date and time objects for json """
 
@@ -36,6 +41,14 @@ class DateTimeEncoder(json.JSONEncoder):
             return {'__datetime__': obj.isoformat() + "Z"}
         elif isinstance(obj, datetime.date):
             return {'__date__': obj.isoformat()}
+        elif isinstance(obj, datetime.timedelta):
+            # Time delta only stores days, seconds and microseconds
+            return {
+                '__type__': "timedelta",
+                'days': obj.days,
+                'seconds': obj.seconds,
+                'microseconds': obj.microseconds,
+            }
         elif isinstance(obj, datetime.time):
             return {'__time__': obj.isoformat()}
 
@@ -68,6 +81,14 @@ class DateTimeDecoder(object):
 
     @staticmethod
     def decode(dct):
+        if "__type__" in dct:
+            obj_type = dct.pop('__type__')
+
+            if obj_type == "timedelta":
+                return datetime.timedelta(**dct)
+            # Not matched
+            dct['__type__'] = obj_type
+
         try:
             return DateTimeDecoder._as_datetime(dct)
         except:
