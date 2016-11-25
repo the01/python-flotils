@@ -5,10 +5,10 @@ Module for loading/saving data/classes with json
 
 __author__ = "the01"
 __email__ = "jungflor@gmail.com"
-__copyright__ = "Copyright (C) 2013-15, Florian JUNG"
+__copyright__ = "Copyright (C) 2013-16, Florian JUNG"
 __license__ = "MIT"
-__version__ = "0.1.5"
-__date__ = "2015-12-31"
+__version__ = "0.1.6"
+__date__ = "2016-11-25"
 # Created: 2014-08-29 09:38
 
 import os
@@ -18,7 +18,7 @@ import json
 import dateutil.parser
 from dateutil.tz import tzutc
 
-from logable import Logable, ModuleLogable
+from .logable import Logable, ModuleLogable
 
 
 class Logger(ModuleLogable):
