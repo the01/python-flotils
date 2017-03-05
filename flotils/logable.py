@@ -1,14 +1,18 @@
 # -*- coding: UTF-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 """
 Logging utilities
 """
 
 __author__ = "the01"
 __email__ = "jungflor@gmail.com"
-__copyright__ = "Copyright (C) 2013-16, Florian JUNG"
+__copyright__ = "Copyright (C) 2013-17, Florian JUNG"
 __license__ = "MIT"
 __version__ = "0.1.4"
-__date__ = "2016-03-02"
+__date__ = "2017-03-06"
 # Created: 2013-03-03 24:00
 
 import logging
@@ -35,7 +39,7 @@ class FunctionFilter(logging.Filter):
             fct = record.function
 
             if fct and not fct.startswith("."):
-                record.function = u"." + fct
+                record.function = "." + fct
         return True
 
 
@@ -69,7 +73,7 @@ class Logable(object):
         """
         res = type(self).__name__
         if self._id:
-            res += u".{}".format(self._id)
+            res += ".{}".format(self._id)
         return res
 
     def _get_function_name(self):
@@ -82,7 +86,7 @@ class Logable(object):
         """
         fname = inspect.getframeinfo(inspect.stack()[2][0]).function
         if fname == "<module>":
-            return u""
+            return ""
         else:
             return fname
 
@@ -176,7 +180,27 @@ class ModuleLogable(Logable):
 
     @property
     def name(self):
-        return type(self).__module__
+        return self.__module__
+
+
+def get_logger():
+    frm = inspect.stack()[1]
+    mod = inspect.getmodule(frm[0])
+
+    class TempLogable(Logable):
+        """ Class to log on module level """
+
+        def __init__(self, settings=None):
+            if settings is None:
+                settings = {}
+            super(TempLogable, self).__init__(settings)
+
+        @property
+        def name(self):
+            return mod.__name__
+
+    logger = TempLogable()
+    return logger
 
 
 default_logging_config = {
