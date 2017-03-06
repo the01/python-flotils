@@ -9,9 +9,9 @@ Module for loading/saving data/classes with json
 
 __author__ = "the01"
 __email__ = "jungflor@gmail.com"
-__copyright__ = "Copyright (C) 2013-16, Florian JUNG"
+__copyright__ = "Copyright (C) 2013-17, Florian JUNG"
 __license__ = "MIT"
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __date__ = "2017-03-06"
 # Created: 2014-08-29 09:38
 
@@ -117,12 +117,107 @@ def loadJSON(json_data, decoder=None):
     :return: Json data
     :rtype: None | int | float | str | list | dict
     """
+    # deprecated
+    import warnings
+    warnings.warn(
+        "This method is no longer in use - Please use load_json() instead",
+        DeprecationWarning
+    )
+    return load_json(json_data, decoder)
+
+
+def loadJSONFile(json_data, decoder=None):
+    """
+    Load data from json file
+
+    :param json_data: Readable object or path to file
+    :type json_data: FileIO | str
+    :param decoder: Use custom json decoder
+    :type decoder: T <= DateTimeDecoder
+    :return: Json data
+    :rtype: None | int | float | str | list | dict
+    """
+    # deprecated
+    import warnings
+    warnings.warn(
+        "This method is no longer in use - Please use load_json_file() instead",
+        DeprecationWarning
+    )
+    return load_json_file(json_data, decoder)
+
+
+def saveJSON(val, pretty=False, sort=True, encoder=None):
+    """
+    Save data to json string
+
+    :param val: Value or struct to save
+    :type val: None | int | float | str | list | dict
+    :param pretty: Format data to be readable (default: False)
+                    otherwise going to be compact
+    :type pretty: bool
+    :param sort: Sort keys (default: True)
+    :type sort: bool
+    :param encoder: Use custom json encoder
+    :type encoder: T <= DateTimeEncoder
+    :return: The jsonified string
+    :rtype: str | unicode
+    """
+    # deprecated
+    import warnings
+    warnings.warn(
+        "This method is no longer in use - Please use save_json() instead",
+        DeprecationWarning
+    )
+    return save_json(val, pretty, sort, encoder)
+
+
+def saveJSONFile(
+        json_data, val,
+        pretty=False, compact=True, sort=True, encoder=None
+):
+    """
+    Save data to json file
+
+    :param json_data: Writable object or path to file
+    :type json_data: FileIO | str
+    :param val: Value or struct to save
+    :type val: None | int | float | str | list | dict
+    :param pretty: Format data to be readable (default: False)
+    :type pretty: bool
+    :param compact: Format data to be compact (default: True)
+    :type compact: bool
+    :param sort: Sort keys (default: True)
+    :type sort: bool
+    :param encoder: Use custom json encoder
+    :type encoder: T <= DateTimeEncoder
+    :rtype: None
+    """
+    # deprecated
+    import warnings
+    warnings.warn(
+        "This method is no longer in use - Please use save_json_file() instead",
+        DeprecationWarning
+    )
+    return save_json_file(json_data, val, pretty, compact, sort, encoder)
+
+
+def load_json(json_data, decoder=None):
+    """
+    Load data from json string
+
+    :param json_data: Stringified json object
+    :type json_data: str | unicode
+    :param decoder: Use custom json decoder
+    :type decoder: T <= DateTimeDecoder
+    :return: Json data
+    :rtype: None | int | float | str | list | dict
+    """
     if decoder is None:
         decoder = DateTimeDecoder
     return json.loads(json_data, object_hook=decoder.decode)
 
 
-def loadJSONFile(json_data, decoder=None):
+def load_json_file(json_data, decoder=None):
     """
     Load data from json file
 
@@ -141,7 +236,7 @@ def loadJSONFile(json_data, decoder=None):
     return json.load(json_data, object_hook=decoder.decode)
 
 
-def saveJSON(val, pretty=False, sort=True, encoder=None):
+def save_json(val, pretty=False, sort=True, encoder=None):
     """
     Save data to json string
 
@@ -175,7 +270,7 @@ def saveJSON(val, pretty=False, sort=True, encoder=None):
     )
 
 
-def saveJSONFile(
+def save_json_file(
         json_data, val,
         pretty=False, compact=True, sort=True, encoder=None
 ):
@@ -228,7 +323,6 @@ def saveJSONFile(
     finally:
         if opened:
             json_data.close()
-
 
 def load_yaml(data):
     """
@@ -291,7 +385,92 @@ def save_yaml_file(yaml_data, val):
             yaml_data.close()
 
 
+def load_file(path):
+    """
+    Load file
+
+    :param path: Path to file
+    :type path: str | unicode
+    :return: Loaded data
+    :rtype: None | int | float | str | unicode | list | dict
+    :raises IOError: If file not found or error accessing file
+    """
+    res = {}
+
+    if not path:
+        IOError("No path specified to save")
+
+    if not os.path.isfile(path):
+        raise IOError("File not found {}".format(path))
+
+    try:
+        with open(path, "rb") as f:
+            if path.endswith(".json"):
+                res = load_json_file(f)
+            elif path.endswith(".yaml") or path.endswith(".yml"):
+                res = load_yaml_file(f)
+    except IOError:
+        raise
+    except Exception as e:
+        raise IOError(e)
+    return res
+
+
+def save_file(path, data, readable=False):
+    """
+    Save to file
+
+    :param path: File path to save
+    :type path: str | unicode
+    :param data: Data to save
+    :type data: None | int | float | str | unicode | list | dict
+    :param readable: Format file to be human readable (default: False)
+    :type readable: bool
+    :rtype: None
+    :raises IOError: If empty path or error writing file
+    """
+    if not path:
+        IOError("No path specified to save")
+
+    try:
+        with open(path, "wb") as f:
+            if path.endswith(".json"):
+                save_json_file(
+                    f,
+                    data,
+                    pretty=readable,
+                    compact=(not readable),
+                    sort=True
+                )
+            elif path.endswith(".yaml") or path.endswith(".yml"):
+                save_yaml_file(f, data)
+    except IOError:
+        raise
+    except Exception as e:
+        raise IOError(e)
+
+
 def joinPathPrefix(path, pre_path=None):
+    """
+        If path set and not absolute, append it to pre path (if used)
+
+        :param path: path to append
+        :type path: str | None
+        :param pre_path: Base path to append to (default: None)
+        :type pre_path: None | str
+        :return: Path or appended path
+        :rtype: str | None
+        """
+    # deprecated
+    import warnings
+    warnings.warn(
+        "This method is no longer in use - Please use join_path_prefix() instead",
+        DeprecationWarning
+    )
+    return join_path_prefix(path, pre_path)
+
+
+def join_path_prefix(path, pre_path=None):
     """
         If path set and not absolute, append it to pre path (if used)
 
@@ -332,17 +511,17 @@ class Loadable(Logable):
         self._prePath = settings.get('path_prefix', None)
 
         if sett_path:
-            sett_path = self.joinPathPrefix(sett_path)
-            sett = self.loadSettings(sett_path)
+            sett_path = self.join_path_prefix(sett_path)
+            sett = self.load_settings(sett_path)
             sett_prepath = sett.get('path_prefix')
             if sett_prepath:
                 # if settPath is absolute path
                 # -> set to settPath else join with dict path_prefix
-                self._prePath = self.joinPathPrefix(sett_prepath)
+                self._prePath = self.join_path_prefix(sett_prepath)
             # settings in constructor overwrite settings from file
             sett.update(settings)
             settings.update(sett)
-            self.debug(u"Loaded config {}".format(sett_path))
+            self.debug("Loaded config {}".format(sett_path))
             # to apply loaded settings to logable as well
             super(Loadable, self).__init__(settings)
 
@@ -355,7 +534,23 @@ class Loadable(Logable):
         :return: Path or appended path
         :rtype: str | None
         """
-        return joinPathPrefix(path, self._prePath)
+        import warnings
+        warnings.warn(
+            "This method is no longer in use - Please use .join_path_prefix() instead",
+            DeprecationWarning
+        )
+        return self.join_path_prefix(path)
+
+    def join_path_prefix(self, path):
+        """
+        If path set and not absolute, append it to self._prePath
+
+        :param path: Path to append
+        :type path: str | None
+        :return: Path or appended path
+        :rtype: str | None
+        """
+        return join_path_prefix(path, self._prePath)
 
     def _loadJSONFile(self, json_data, decoder=None):
         """
@@ -369,10 +564,29 @@ class Loadable(Logable):
         :rtype: None | int | float | str | list | dict
         :raises IOError: Failed to load
         """
+        import warnings
+        warnings.warn(
+            "This method is no longer in use - Please use ._load_json_file() instead",
+            DeprecationWarning
+        )
+        return self._load_json_file(json_data, decoder)
+
+    def _load_json_file(self, json_data, decoder=None):
+        """
+        Load data from json file
+
+        :param json_data: Readable file or path to file
+        :type json_data: FileIO | str
+        :param decoder: Use custom json decoder
+        :type decoder: T <= DateTimeDecoder
+        :return: Json data
+        :rtype: None | int | float | str | list | dict
+        :raises IOError: Failed to load
+        """
         try:
-            res = loadJSONFile(json_data, decoder=decoder)
+            res = load_json_file(json_data, decoder=decoder)
         except ValueError as e:
-            if str(e) == "No JSON object could be decoded":
+            if "{}".format(e) == "No JSON object could be decoded":
                 raise IOError("Decoding JSON failed")
             self.exception(u"Failed to load from {}".format(json_data))
             raise IOError("Loading file failed")
@@ -382,7 +596,36 @@ class Loadable(Logable):
         return res
 
     def _saveJSONFile(self, json_data, val,
-                      pretty=False, compact=True, sort=True, encoder=None):
+                      pretty=False, compact=True, sort=True, encoder=None
+    ):
+        """
+        Save data to json file
+
+        :param json_data: Writable file or path to file
+        :type json_data: FileIO | str
+        :param val: Value or struct to save
+        :type val: None | int | float | str | list | dict
+        :param pretty: Format data to be readable (default: False)
+        :type pretty: bool
+        :param compact: Format data to be compact (default: True)
+        :type compact: bool
+        :param sort: Sort keys (default: True)
+        :type sort: bool
+        :param encoder: Use custom json encoder
+        :type encoder: T <= DateTimeEncoder
+        :rtype: None
+        :raises IOError: Failed to save
+        """
+        import warnings
+        warnings.warn(
+            "This method is no longer in use - Please use ._save_json_file() instead",
+            DeprecationWarning
+        )
+        return self._save_json_file(json_data, val, pretty, compact, sort, encoder)
+
+    def _save_json_file(self, json_data, val,
+                      pretty=False, compact=True, sort=True, encoder=None
+    ):
         """
         Save data to json file
 
@@ -402,7 +645,7 @@ class Loadable(Logable):
         :raises IOError: Failed to save
         """
         try:
-            saveJSONFile(json_data, val, pretty, compact, sort, encoder)
+            save_json_file(json_data, val, pretty, compact, sort, encoder)
         except:
             self.exception(u"Failed to save to {}".format(json_data))
             raise IOError("Saving file failed")
@@ -451,30 +694,69 @@ class Loadable(Logable):
         :raises IOError: If file not found or error accessing file
         :raises TypeError: Settings file does not contain dict
         """
+        import warnings
+        warnings.warn(
+            "This method is no longer in use - Please use .load_settings() instead",
+            DeprecationWarning
+        )
+        return self.load_settings(path)
+
+    def load_settings(self, path):
+        """
+        Load settings dict
+
+        :param path: Path to settings file
+        :type path: str | unicode
+        :return: Loaded settings
+        :rtype: dict
+        :raises IOError: If file not found or error accessing file
+        :raises TypeError: Settings file does not contain dict
+        """
         res = {}
 
         if not path:
             IOError("No path specified to save")
 
         if not os.path.isfile(path):
-            raise IOError(u"File not found {}".format(path))
+            raise IOError("File not found {}".format(path))
 
         try:
             with open(path, "rb") as f:
                 if path.endswith(".json"):
-                    res = self._loadJSONFile(f)
+                    res = self._load_json_file(f)
                 elif path.endswith(".yaml") or path.endswith(".yml"):
                     res = self._load_yaml_file(f)
         except IOError:
             raise
         except Exception as e:
-            self.exception(u"Failed reading {}".format(path))
+            self.exception("Failed reading {}".format(path))
             raise IOError(e)
         if not isinstance(res, dict):
             raise TypeError("Expected settings to be dict")
         return res
 
     def saveSettings(self, path, settings, readAble=False):
+        """
+        Save settings to file
+
+        :param path: File path to save
+        :type path: str | unicode
+        :param settings: Settings to save
+        :type settings: dict
+        :param readAble: Format file to be human readable (default: False)
+        :type readAble: bool
+        :rtype: None
+        :raises IOError: If empty path or error writing file
+        :raises TypeError: Settings is not a dict
+        """
+        import warnings
+        warnings.warn(
+            "This method is no longer in use - Please use .save_settings() instead",
+            DeprecationWarning
+        )
+        return self.save_settings(path, settings, readAble)
+
+    def save_settings(self, path, settings, readAble=False):
         """
         Save settings to file
 
@@ -497,7 +779,7 @@ class Loadable(Logable):
         try:
             with open(path, "wb") as f:
                 if path.endswith(".json"):
-                    self._saveJSONFile(
+                    self._save_json_file(
                         f,
                         settings,
                         pretty=readAble,
@@ -509,5 +791,5 @@ class Loadable(Logable):
         except IOError:
             raise
         except Exception as e:
-            self.exception(u"Failed writing {}".format(path))
+            self.exception("Failed writing {}".format(path))
             raise IOError(e)

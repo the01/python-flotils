@@ -4,6 +4,12 @@ History
 =======
 
 
+0.3.5a0 (2017-03-06)
+--------------------
+
+* Deprecated camel-case methods in loadable, new save/load methods
+
+
 0.3.4a0 (2017-03-06)
 --------------------
 
