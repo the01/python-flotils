@@ -1,4 +1,8 @@
 # -*- coding: UTF-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 """
 Module for loading/saving data/classes with json
 """
@@ -7,8 +11,8 @@ __author__ = "the01"
 __email__ = "jungflor@gmail.com"
 __copyright__ = "Copyright (C) 2013-16, Florian JUNG"
 __license__ = "MIT"
-__version__ = "0.1.6"
-__date__ = "2016-11-25"
+__version__ = "0.2.0"
+__date__ = "2017-03-06"
 # Created: 2014-08-29 09:38
 
 import os
@@ -17,6 +21,7 @@ import json
 
 import dateutil.parser
 from dateutil.tz import tzutc
+import yaml
 
 from .logable import Logable, ModuleLogable
 
@@ -106,7 +111,7 @@ def loadJSON(json_data, decoder=None):
     Load data from json string
 
     :param json_data: Stringified json object
-    :type json_data: str
+    :type json_data: str | unicode
     :param decoder: Use custom json decoder
     :type decoder: T <= DateTimeDecoder
     :return: Json data
@@ -150,7 +155,7 @@ def saveJSON(val, pretty=False, sort=True, encoder=None):
     :param encoder: Use custom json encoder
     :type encoder: T <= DateTimeEncoder
     :return: The jsonified string
-    :rtype: str
+    :rtype: str | unicode
     """
     if encoder is None:
         encoder = DateTimeEncoder
@@ -223,6 +228,67 @@ def saveJSONFile(
     finally:
         if opened:
             json_data.close()
+
+
+def load_yaml(data):
+    """
+    Load data from yaml string
+
+    :param data: Stringified yaml object
+    :type data: str | unicode
+    :return: Yaml data
+    :rtype: None | int | float | str | unicode | list | dict
+    """
+    return yaml.load(data)
+
+
+def load_yaml_file(data):
+    """
+    Load data from yaml file
+
+    :param json_data: Readable object or path to file
+    :type json_data: FileIO | str | unicode
+    :return: Yaml data
+    :rtype: None | int | float | str | unicode | list | dict
+    """
+    if not hasattr(data, "read"):
+        with open(data, "rb") as f:
+            return yaml.load(f)
+    return yaml.load(data)
+
+
+def save_yaml(val):
+    """
+    Save data to yaml string
+
+    :param val: Value or struct to save
+    :type val: None | int | float | str | unicode | list | dict
+    :return: The yamlified string
+    :rtype: str | unicode
+    """
+    return yaml.dump(val)
+
+
+def save_yaml_file(yaml_data, val):
+    """
+    Save data to yaml file
+
+    :param yaml_data: Writable object or path to file
+    :type yaml_data: FileIO | str | unicode
+    :param val: Value or struct to save
+    :type val: None | int | float | str | unicode | list | dict
+    """
+    opened = False
+
+    if not hasattr(yaml_data, "write"):
+        yaml_data = open(yaml_data, "wb")
+        opened = True
+
+    try:
+        yaml.dump(val, yaml_data)
+    finally:
+        if opened:
+            yaml_data.close()
 
 
 def joinPathPrefix(path, pre_path=None):
@@ -341,12 +407,45 @@ class Loadable(Logable):
             self.exception(u"Failed to save to {}".format(json_data))
             raise IOError("Saving file failed")
 
+    def _load_yaml_file(self, data):
+        """
+        Load data from yaml file
+
+        :param data: Readable object or path to file
+        :type data: FileIO | str | unicode
+        :return: Yaml data
+        :rtype: None | int | float | str | unicode | list | dict
+        :raises IOError: Failed to load
+        """
+        try:
+            res = load_yaml_file(data)
+        except:
+            self.exception(u"Failed to load from {}".format(data))
+            raise IOError("Loading file failed")
+        return res
+
+    def _save_yaml_file(self, yaml_data, val):
+        """
+        Save data to yaml file
+
+        :param yaml_data: Writable object or path to file
+        :type yaml_data: FileIO | str | unicode
+        :param val: Value or struct to save
+        :type val: None | int | float | str | unicode | list | dict
+        :raises IOError: Failed to save
+        """
+        try:
+            save_yaml_file(yaml_data, val)
+        except:
+            self.exception(u"Failed to save to {}".format(yaml_data))
+            raise IOError("Saving file failed")
+
     def loadSettings(self, path):
         """
         Load settings dict
 
         :param path: Path to settings file
-        :type path: str
+        :type path: str | unicode
         :return: Loaded settings
         :rtype: dict
         :raises IOError: If file not found or error accessing file
@@ -361,8 +460,11 @@ class Loadable(Logable):
             raise IOError(u"File not found {}".format(path))
 
         try:
-            with open(path, 'rb') as f:
-                res = self._loadJSONFile(f)
+            with open(path, "rb") as f:
+                if path.endswith(".json"):
+                    res = self._loadJSONFile(f)
+                elif path.endswith(".yaml") or path.endswith(".yml"):
+                    res = self._load_yaml_file(f)
         except IOError:
             raise
         except Exception as e:
@@ -377,7 +479,7 @@ class Loadable(Logable):
         Save settings to file
 
         :param path: File path to save
-        :type path: str
+        :type path: str | unicode
         :param settings: Settings to save
         :type settings: dict
         :param readAble: Format file to be human readable (default: False)
@@ -393,14 +495,17 @@ class Loadable(Logable):
             raise TypeError("Expected settings to be dict")
 
         try:
-            with open(path, 'wb') as f:
-                self._saveJSONFile(
-                    f,
-                    settings,
-                    pretty=readAble,
-                    compact=(not readAble),
-                    sort=True
-                )
+            with open(path, "wb") as f:
+                if path.endswith(".json"):
+                    self._saveJSONFile(
+                        f,
+                        settings,
+                        pretty=readAble,
+                        compact=(not readAble),
+                        sort=True
+                    )
+                elif path.endswith(".yaml") or path.endswith(".yml"):
+                    self._save_yaml_file(f, settings)
         except IOError:
             raise
         except Exception as e:
