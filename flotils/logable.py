@@ -9,10 +9,10 @@ Logging utilities
 
 __author__ = "the01"
 __email__ = "jungflor@gmail.com"
-__copyright__ = "Copyright (C) 2013-17, Florian JUNG"
+__copyright__ = "Copyright (C) 2013-18, Florian JUNG"
 __license__ = "MIT"
-__version__ = "0.1.4"
-__date__ = "2017-03-06"
+__version__ = "0.1.5"
+__date__ = "2018-01-27"
 # Created: 2013-03-03 24:00
 
 import logging
@@ -97,16 +97,6 @@ class Logable(object):
             *args, **kargs
         )
 
-    def logException(self, e):
-        # deprecated
-        import warnings
-        warnings.warn(
-            "This method is no longer in use"
-            " - Please use .exception() instead",
-            DeprecationWarning
-        )
-        self._logger.exception(e)
-
     def exception(self, msg, *args, **kwargs):
         self._logger.exception(
             msg,
@@ -123,19 +113,6 @@ class Logable(object):
 
     def info(self, msg, *args, **kwargs):
         self._logger.info(
-            msg,
-            extra={'function': self._get_function_name()},
-            *args, **kwargs
-        )
-
-    def warn(self, msg, *args, **kwargs):
-        # deprecated
-        import warnings
-        warnings.warn(
-            "This method is no longer in use - Please use .warning() instead",
-            DeprecationWarning
-        )
-        self._logger.warning(
             msg,
             extra={'function': self._get_function_name()},
             *args, **kwargs

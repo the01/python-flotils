@@ -1,14 +1,18 @@
 # -*- coding: UTF-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 """
 Module for runable interfaces
 """
 
 __author__ = "the01"
 __email__ = "jungflor@gmail.com"
-__copyright__ = "Copyright (C) 2015-16, Florian JUNG"
+__copyright__ = "Copyright (C) 2015-18, Florian JUNG"
 __license__ = "All rights reserved"
-__version__ = "0.1.1a0"
-__date__ = "2016-03-31"
+__version__ = "0.1.2"
+__date__ = "2018-01-27"
 # Created: 2015-06-07 15:00
 
 from abc import ABCMeta, abstractmethod
@@ -145,5 +149,5 @@ class SignalStopWrapper(Logable, Stopable):
         self.info("Catching SIGINT and SIGTERM")
 
     def _signal_handler(self, sig, frame):
-        self.warning(u"Signal {} caught".format(sig))
+        self.warning("Signal {} caught".format(sig))
         self.stop()

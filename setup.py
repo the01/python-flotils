@@ -23,7 +23,8 @@ import re
 
 
 if sys.argv[-1] == "build":
-    os.system("python setup.py clean sdist bdist bdist_egg bdist_wheel")
+    # TODO: no sdist?
+    os.system("python setup.py clean bdist bdist_egg bdist_wheel")
 
 
 def get_version():

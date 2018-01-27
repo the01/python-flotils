@@ -9,10 +9,10 @@ Module for loading/saving data/classes with json
 
 __author__ = "the01"
 __email__ = "jungflor@gmail.com"
-__copyright__ = "Copyright (C) 2013-17, Florian JUNG"
+__copyright__ = "Copyright (C) 2013-18, Florian JUNG"
 __license__ = "MIT"
-__version__ = "0.3.0"
-__date__ = "2017-03-06"
+__version__ = "0.3.1"
+__date__ = "2018-01-27"
 # Created: 2014-08-29 09:38
 
 import os
@@ -60,6 +60,7 @@ class DateTimeEncoder(json.JSONEncoder):
         return super(DateTimeEncoder, self).default(obj)
 
 
+# TODO: Load datetime as utc but without tzinfo set
 class DateTimeDecoder(object):
     """ Decode datetime, date and time from json """
 
@@ -712,7 +713,61 @@ class Loadable(Logable):
         :raises IOError: If file not found or error accessing file
         :raises TypeError: Settings file does not contain dict
         """
-        res = {}
+        res = self.load_file(path)
+        if not isinstance(res, dict):
+            raise TypeError("Expected settings to be dict")
+        return res
+
+    def saveSettings(self, path, settings, readable=False):
+        """
+        Save settings to file
+
+        :param path: File path to save
+        :type path: str | unicode
+        :param settings: Settings to save
+        :type settings: dict
+        :param readable: Format file to be human readable (default: False)
+        :type readable: bool
+        :rtype: None
+        :raises IOError: If empty path or error writing file
+        :raises TypeError: Settings is not a dict
+        """
+        import warnings
+        warnings.warn(
+            "This method is no longer in use - Please use .save_settings() instead",
+            DeprecationWarning
+        )
+        return self.save_settings(path, settings, readable)
+
+    def save_settings(self, path, settings, readable=False):
+        """
+        Save settings to file
+
+        :param path: File path to save
+        :type path: str | unicode
+        :param settings: Settings to save
+        :type settings: dict
+        :param readable: Format file to be human readable (default: False)
+        :type readable: bool
+        :rtype: None
+        :raises IOError: If empty path or error writing file
+        :raises TypeError: Settings is not a dict
+        """
+        if not isinstance(settings, dict):
+            raise TypeError("Expected settings to be dict")
+        return self.save_file(path, settings, readable)
+
+    def load_file(self, path):
+        """
+        Load file
+
+        :param path: Path to file
+        :type path: str | unicode
+        :return: Loaded settings
+        :rtype: None | str | unicode | int | list | dict
+        :raises IOError: If file not found or error accessing file
+        """
+        res = None
 
         if not path:
             IOError("No path specified to save")
@@ -731,63 +786,36 @@ class Loadable(Logable):
         except Exception as e:
             self.exception("Failed reading {}".format(path))
             raise IOError(e)
-        if not isinstance(res, dict):
-            raise TypeError("Expected settings to be dict")
         return res
 
-    def saveSettings(self, path, settings, readAble=False):
+    def save_file(self, path, data, readable=False):
         """
-        Save settings to file
+        Save to file
 
         :param path: File path to save
         :type path: str | unicode
-        :param settings: Settings to save
-        :type settings: dict
-        :param readAble: Format file to be human readable (default: False)
-        :type readAble: bool
+        :param data: To save
+        :type data: None | str | unicode | int | list | dict
+        :param readable: Format file to be human readable (default: False)
+        :type readable: bool
         :rtype: None
         :raises IOError: If empty path or error writing file
-        :raises TypeError: Settings is not a dict
-        """
-        import warnings
-        warnings.warn(
-            "This method is no longer in use - Please use .save_settings() instead",
-            DeprecationWarning
-        )
-        return self.save_settings(path, settings, readAble)
-
-    def save_settings(self, path, settings, readAble=False):
-        """
-        Save settings to file
-
-        :param path: File path to save
-        :type path: str | unicode
-        :param settings: Settings to save
-        :type settings: dict
-        :param readAble: Format file to be human readable (default: False)
-        :type readAble: bool
-        :rtype: None
-        :raises IOError: If empty path or error writing file
-        :raises TypeError: Settings is not a dict
         """
         if not path:
             IOError("No path specified to save")
-
-        if not isinstance(settings, dict):
-            raise TypeError("Expected settings to be dict")
 
         try:
             with open(path, "wb") as f:
                 if path.endswith(".json"):
                     self._save_json_file(
                         f,
-                        settings,
-                        pretty=readAble,
-                        compact=(not readAble),
+                        data,
+                        pretty=readable,
+                        compact=(not readable),
                         sort=True
                     )
                 elif path.endswith(".yaml") or path.endswith(".yml"):
-                    self._save_yaml_file(f, settings)
+                    self._save_yaml_file(f, data)
         except IOError:
             raise
         except Exception as e:

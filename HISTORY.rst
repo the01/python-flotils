@@ -4,6 +4,15 @@ History
 =======
 
 
+0.4.0 (2018-01-27)
+--------------------
+
+* add convenience module (PrintableBase, FromToDictBase)
+* add save_file/load_file to Loadable
+* remove deprecated logException, warn from Logable
+* __future__ imports in runable
+
+
 0.3.5a0 (2017-03-06)
 --------------------
 
