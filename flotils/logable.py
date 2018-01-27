@@ -163,6 +163,10 @@ class ModuleLogable(Logable):
 def get_logger():
     frm = inspect.stack()[1]
     mod = inspect.getmodule(frm[0])
+    if mod is None:
+        logging.error(dir(frm))
+        logging.error(dir(inspect.stack()[0]))
+
 
     class TempLogable(Logable):
         """ Class to log on module level """
@@ -174,6 +178,8 @@ def get_logger():
 
         @property
         def name(self):
+            if mod is None:
+                return ""
             return mod.__name__
 
     logger = TempLogable()
