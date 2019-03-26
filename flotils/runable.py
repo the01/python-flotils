@@ -9,10 +9,10 @@ Module for runable interfaces
 
 __author__ = "the01"
 __email__ = "jungflor@gmail.com"
-__copyright__ = "Copyright (C) 2015-18, Florian JUNG"
+__copyright__ = "Copyright (C) 2015-19, Florian JUNG"
 __license__ = "All rights reserved"
-__version__ = "0.1.2"
-__date__ = "2018-01-27"
+__version__ = "0.1.3"
+__date__ = "2019-03-21"
 # Created: 2015-06-07 15:00
 
 from abc import ABCMeta, abstractmethod
@@ -104,6 +104,16 @@ class StartStopable(Startable, Stopable):
             :type _running: bool """
         self._start_block_timeout = settings.get('start_blocking_timeout', 1.0)
         """ Timeout used to sleep in blocking loop (in seconds) """
+
+    @property
+    def is_running(self):
+        """
+        Is this class currently running
+
+        :return: Running state
+        :rtype: bool
+        """
+        return self._is_running
 
     def start(self, blocking=False):
         """

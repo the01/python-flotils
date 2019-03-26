@@ -3,6 +3,19 @@
 History
 =======
 
+0.5.0 (2019-03-26)
+--------------------
+
+* Fix typos
+* Flake8 not version bound
+* Update pyyaml
+* Remove deprecated code
+* Fix open() calls (use io.open(), no byte open, utf8 encoding)
+* StartStopable.is_running
+* DateTimeEn/Decode free of time zone (always utc)
+* Drop "python-dateutil" dependency
+* Basic loadable test file
+
 
 0.4.2 (2018-01-27)
 --------------------

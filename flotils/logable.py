@@ -9,10 +9,10 @@ Logging utilities
 
 __author__ = "the01"
 __email__ = "jungflor@gmail.com"
-__copyright__ = "Copyright (C) 2013-18, Florian JUNG"
+__copyright__ = "Copyright (C) 2013-19, Florian JUNG"
 __license__ = "MIT"
-__version__ = "0.1.5"
-__date__ = "2018-01-27"
+__version__ = "0.1.6"
+__date__ = "2019-03-21"
 # Created: 2013-03-03 24:00
 
 import logging
@@ -69,7 +69,7 @@ class Logable(object):
         Get the module name
 
         :return: Module name
-        :rtype: str
+        :rtype: str | unicode
         """
         res = type(self).__name__
         if self._id:
@@ -82,7 +82,7 @@ class Logable(object):
 
         :return: The name of the calling function
             (expected to be called in self.error/debug/..)
-        :rtype: str
+        :rtype: str | unicode
         """
         fname = inspect.getframeinfo(inspect.stack()[2][0]).function
         if fname == "<module>":
@@ -166,7 +166,6 @@ def get_logger():
     if mod is None:
         logging.error(dir(frm))
         logging.error(dir(inspect.stack()[0]))
-
 
     class TempLogable(Logable):
         """ Class to log on module level """
@@ -257,7 +256,7 @@ default_logging_config = {
     }
 }
 
-# try to use colorlog as default -> if not installed, fallback solution
+# Try to use colorlog as default -> if not installed, fallback solution
 if colorlog is None:
     del default_logging_config['formatters']['colored']
     default_logging_config['handlers']['console']['formatter'] = "verbose"
