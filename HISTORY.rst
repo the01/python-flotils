@@ -3,6 +3,13 @@
 History
 =======
 
+0.5.1 (2019-04-14)
+--------------------
+
+* Fix json loading bug
+* Make json time loading more permissable
+
+
 0.5.0 (2019-03-26)
 --------------------
 
