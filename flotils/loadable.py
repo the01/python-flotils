@@ -11,8 +11,8 @@ __author__ = "the01"
 __email__ = "jungflor@gmail.com"
 __copyright__ = "Copyright (C) 2013-19, Florian JUNG"
 __license__ = "MIT"
-__version__ = "0.4.0"
-__date__ = "2019-03-26"
+__version__ = "0.4.1"
+__date__ = "2019-04-14"
 # Created: 2014-08-29 09:38
 
 import os
@@ -66,9 +66,14 @@ class DateTimeDecoder(object):
     def _as_datetime(dct):
         if "__datetime__" in dct.keys():
             # Should be UTC
-            return datetime.datetime.strptime(
-                dct['__datetime__'], "%Y-%m-%dT%H:%M:%S.%fZ"
-            )
+            try:
+                return datetime.datetime.strptime(
+                    dct['__datetime__'], "%Y-%m-%dT%H:%M:%S.%fZ"
+                )
+            except ValueError:
+                return datetime.datetime.strptime(
+                    dct['__datetime__'], "%Y-%m-%dT%H:%M:%SZ"
+                )
         raise TypeError("Not Datetime")
 
     @staticmethod
@@ -85,9 +90,14 @@ class DateTimeDecoder(object):
     @staticmethod
     def _as_time(dct):
         if "__time__" in dct:
-            d = datetime.datetime.strptime(
-                dct['__time__'], "%H:%M:%S.%f"
-            )
+            try:
+                d = datetime.datetime.strptime(
+                    dct['__time__'], "%H:%M:%S.%f"
+                )
+            except ValueError:
+                d = datetime.datetime.strptime(
+                    dct['__time__'], "%H:%M:%S"
+                )
             if d:
                 return d.time()
             return d
@@ -96,7 +106,7 @@ class DateTimeDecoder(object):
     @staticmethod
     def decode(dct):
         if not isinstance(dct, dict):
-            return dict
+            return dct
         if "__type__" in dct:
             obj_type = dct.pop('__type__')
 

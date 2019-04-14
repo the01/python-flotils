@@ -11,8 +11,8 @@ __author__ = "the01"
 __email__ = "jungflor@gmail.com"
 __copyright__ = "Copyright (C) 2013-19, Florian JUNG"
 __license__ = "MIT"
-__version__ = "0.5.0"
-__date__ = "2019-03-26"
+__version__ = "0.5.1"
+__date__ = "2019-04-14"
 
 import logging
 
