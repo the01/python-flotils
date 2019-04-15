@@ -19,6 +19,7 @@ import os
 import datetime
 import json
 import io
+import sys
 
 import yaml
 
@@ -181,19 +182,23 @@ def save_json(val, pretty=False, sort=True, encoder=None):
     if encoder is None:
         encoder = DateTimeEncoder
     if pretty:
-        return json.dumps(
+        data = json.dumps(
             val,
             indent=4,
             separators=(',', ': '),
             sort_keys=sort,
             cls=encoder
         )
-    return json.dumps(
-        val,
-        separators=(',', ':'),
-        sort_keys=sort,
-        cls=encoder
-    )
+    else:
+        data = json.dumps(
+            val,
+            separators=(',', ':'),
+            sort_keys=sort,
+            cls=encoder
+        )
+    if not sys.version_info > (3, 0) and isinstance(data, str):
+        data = data.decode("utf-8")
+    return data
 
 
 def save_json_file(
@@ -228,24 +233,25 @@ def save_json_file(
 
     try:
         if pretty:
-            json.dump(
+            data = json.dumps(
                 val,
-                file,
                 indent=4,
                 separators=(',', ': '),
                 sort_keys=sort,
                 cls=encoder
             )
         elif compact:
-            json.dump(
+            data = json.dumps(
                 val,
-                file,
                 separators=(',', ':'),
                 sort_keys=sort,
                 cls=encoder
             )
         else:
-            json.dump(val, file, sort_keys=sort, cls=encoder)
+            data = json.dumps(val, sort_keys=sort, cls=encoder)
+        if not sys.version_info > (3, 0) and isinstance(data, str):
+            data = data.decode("utf-8")
+        file.write(data)
     finally:
         if opened:
             file.close()
@@ -260,7 +266,7 @@ def load_yaml(data):
     :return: Yaml data
     :rtype: None | int | float | str | unicode | list | dict
     """
-    return yaml.load(data)
+    return yaml.load(data, yaml.FullLoader)
 
 
 def load_yaml_file(file):
@@ -274,8 +280,8 @@ def load_yaml_file(file):
     """
     if not hasattr(file, "read"):
         with io.open(file, "r", encoding="utf-8") as f:
-            return yaml.load(f)
-    return yaml.load(file)
+            return yaml.load(f, yaml.FullLoader)
+    return yaml.load(file, yaml.FullLoader)
 
 
 def save_yaml(val):
