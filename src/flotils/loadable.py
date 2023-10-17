@@ -1,50 +1,58 @@
 # -*- coding: UTF-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-"""
-Module for loading/saving data/classes with json
-"""
+""" Module for loading/saving data/classes with json """
 
 __author__ = "the01"
 __email__ = "jungflor@gmail.com"
-__copyright__ = "Copyright (C) 2013-19, Florian JUNG"
+__copyright__ = "Copyright (C) 2013-23, Florian JUNG"
 __license__ = "MIT"
-__version__ = "0.4.1"
-__date__ = "2019-04-14"
+__version__ = "0.5.0"
+__date__ = "2023-10-17"
 # Created: 2014-08-29 09:38
 
-import os
 import datetime
-import json
 import io
-import sys
+import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional, TextIO, Type, Union
+from warnings import warn
 
 import yaml
 
-from .logable import Logable, ModuleLogable
+from .logable import Logable
 
 
-class Logger(ModuleLogable):
-    pass
-
-
-logger = Logger()
+MSG_DEPRECATED = "Serializing with '{}' keys is deprecated. Use '__type__' instead"
+TYPE_ALL = Union[None, str, int, float, bool, Dict, List]
+TYPE_DATETIME = Union[
+    datetime.datetime, datetime.date, datetime.time, datetime.timedelta,
+]
 
 
 # TODO: New format according to https://gist.github.com/majgis/4200488
 class DateTimeEncoder(json.JSONEncoder):
     """ Encode datetime, date and time objects for json """
 
-    def default(self, obj):
+    def default(self, obj: Any) -> Union[Dict[str, Any], Any]:
+        """ Serialize object """
         if isinstance(obj, datetime.datetime):
-            # save all without tz info as UTC
+            # Save all without tz info as UTC
             if obj.tzinfo:
-                obj = (obj - obj.tzinfo.utcoffset(obj)).replace(tzinfo=None)
-            return {'__datetime__': obj.isoformat() + "Z"}
+                offset = obj.tzinfo.utcoffset(obj)
+
+                if offset:
+                    obj = obj - offset
+
+                obj = obj.replace(tzinfo=None)
+
+            return {
+                '__type__': "datetime",
+                '__value__': obj.isoformat() + "Z"
+            }
         elif isinstance(obj, datetime.date):
-            return {'__date__': obj.isoformat()}
+            return {
+                '__type__': "date",
+                '__value__': obj.isoformat()
+            }
         elif isinstance(obj, datetime.timedelta):
             # Time delta only stores days, seconds and microseconds
             return {
@@ -54,7 +62,10 @@ class DateTimeEncoder(json.JSONEncoder):
                 'microseconds': obj.microseconds,
             }
         elif isinstance(obj, datetime.time):
-            return {'__time__': obj.isoformat()}
+            return {
+                '__type__': "time",
+                '__value__': obj.isoformat()
+            }
 
         return super(DateTimeEncoder, self).default(obj)
 
@@ -64,106 +75,184 @@ class DateTimeDecoder(object):
     """ Decode datetime, date and time from json """
 
     @staticmethod
-    def _as_datetime(dct):
+    def _as_datetime(dct: Dict[str, Any]) -> datetime.datetime:
+        """
+        Try to load dict as datetime
+
+        :param dct: Dict with potential serialized datetime
+        :returns: Loaded datetime
+        :raises TypeError: Not a datetime
+        :raises KeyError: No '__value__' field
+        :raises Exception: Failed to parse datetime
+        """
         if "__datetime__" in dct.keys():
+            warn(
+                MSG_DEPRECATED.format("__datetime__"),
+                DeprecationWarning, stacklevel=2
+            )
+            dct = {
+                '__type__': "datetime",
+                '__value__': dct['__datetime__'],
+            }
+
+        if dct.get('__type__', None) == "datetime":
             # Should be UTC
             try:
                 return datetime.datetime.strptime(
-                    dct['__datetime__'], "%Y-%m-%dT%H:%M:%S.%fZ"
+                    dct['__value__'], "%Y-%m-%dT%H:%M:%S.%fZ"
                 )
             except ValueError:
                 return datetime.datetime.strptime(
-                    dct['__datetime__'], "%Y-%m-%dT%H:%M:%SZ"
+                    dct['__value__'], "%Y-%m-%dT%H:%M:%SZ"
                 )
+
         raise TypeError("Not Datetime")
 
     @staticmethod
-    def _as_date(dct):
+    def _as_date(dct: Dict[str, Any]) -> datetime.date:
+        """
+        Try to load dict as date
+
+        :param dct: Dict with potential serialized date
+        :returns: Loaded date
+        :raises TypeError: Not a date
+        :raises KeyError: No '__value__' field
+        :raises Exception: Failed to parse date
+        """
         if "__date__" in dct:
-            d = datetime.datetime.strptime(
-                dct['__date__'], "%Y-%m-%d"
+            warn(
+                MSG_DEPRECATED.format("__date__"),
+                DeprecationWarning, stacklevel=2
             )
+            dct = {
+                '__type__': "date",
+                '__value__': dct['__date__'],
+            }
+
+        if dct.get('__type__', None) == "date":
+            d = datetime.datetime.strptime(
+                dct['__value__'], "%Y-%m-%d"
+            )
+
             if d:
                 return d.date()
-            return d
+
         raise TypeError("Not Date")
 
     @staticmethod
-    def _as_time(dct):
+    def _as_time(dct: Dict[str, Any]) -> datetime.time:
+        """
+        Try to load dict as time
+
+        :param dct: Dict with potential serialized time
+        :returns: Loaded time
+        :raises TypeError: Not a time
+        :raises KeyError: No '__value__' field
+        :raises Exception: Failed to parse time
+        """
         if "__time__" in dct:
+            warn(
+                MSG_DEPRECATED.format("__time__"),
+                DeprecationWarning, stacklevel=2
+            )
+            dct = {
+                '__type__': "time",
+                '__value__': dct['__time__'],
+            }
+
+        if dct.get('__type__', None) == "time":
             try:
                 d = datetime.datetime.strptime(
-                    dct['__time__'], "%H:%M:%S.%f"
+                    dct['__value__'], "%H:%M:%S.%f"
                 )
             except ValueError:
                 d = datetime.datetime.strptime(
-                    dct['__time__'], "%H:%M:%S"
+                    dct['__value__'], "%H:%M:%S"
                 )
+
             if d:
                 return d.time()
-            return d
+
         raise TypeError("Not Time")
 
     @staticmethod
-    def decode(dct):
+    def decode(
+            dct: Union[Any, Dict[str, Any]]
+    ) -> Union[TYPE_ALL, TYPE_DATETIME]:
+        """ Decode json data into actual objects """
         if not isinstance(dct, dict):
             return dct
+
         if "__type__" in dct:
             obj_type = dct.pop('__type__')
 
             if obj_type == "timedelta":
                 return datetime.timedelta(**dct)
+
             # Not matched
             dct['__type__'] = obj_type
 
         try:
             return DateTimeDecoder._as_datetime(dct)
-        except:
-            try:
-                return DateTimeDecoder._as_date(dct)
-            except:
-                try:
-                    return DateTimeDecoder._as_time(dct)
-                except:
-                    return dct
+        except Exception:  # nosec B110
+            pass
+        try:
+            return DateTimeDecoder._as_date(dct)
+        except Exception:  # nosec B110
+            pass
+        try:
+            return DateTimeDecoder._as_time(dct)
+        except Exception:  # nosec B110
+            pass
+
+        return dct
 
 
-def load_json(json_data, decoder=None):
+# Return Type depends on the decoder
+def load_json(
+        json_data: str, decoder: Optional[Type[DateTimeDecoder]] = None
+) -> Any:
     """
     Load data from json string
 
     :param json_data: Stringified json object
-    :type json_data: str | unicode
     :param decoder: Use custom json decoder
     :type decoder: T <= DateTimeDecoder
     :return: Json data
-    :rtype: None | int | float | str | list | dict
     """
     if decoder is None:
         decoder = DateTimeDecoder
+
     return json.loads(json_data, object_hook=decoder.decode)
 
 
-def load_json_file(file, decoder=None):
+def load_json_file(
+        file: Union[TextIO, str, Path], decoder: Optional[Type[DateTimeDecoder]] = None
+) -> Any:
     """
     Load data from json file
 
     :param file: Readable object or path to file
-    :type file: FileIO | str
     :param decoder: Use custom json decoder
     :type decoder: T <= DateTimeDecoder
     :return: Json data
-    :rtype: None | int | float | str | list | dict
     """
     if decoder is None:
         decoder = DateTimeDecoder
+
     if not hasattr(file, "read"):
         with io.open(file, "r", encoding="utf-8") as f:
             return json.load(f, object_hook=decoder.decode)
+
     return json.load(file, object_hook=decoder.decode)
 
 
-def save_json(val, pretty=False, sort=True, encoder=None):
+# Type of val depends on encoder
+def save_json(
+        val: Any,
+        pretty: bool = False, sort: bool = True,
+        encoder: Optional[Type[DateTimeEncoder]] = None
+) -> str:
     """
     Save data to json string
 
@@ -171,16 +260,14 @@ def save_json(val, pretty=False, sort=True, encoder=None):
     :type val: None | int | float | str | list | dict
     :param pretty: Format data to be readable (default: False)
                     otherwise going to be compact
-    :type pretty: bool
     :param sort: Sort keys (default: True)
-    :type sort: bool
     :param encoder: Use custom json encoder
     :type encoder: T <= DateTimeEncoder
     :return: The jsonified string
-    :rtype: str | unicode
     """
     if encoder is None:
         encoder = DateTimeEncoder
+
     if pretty:
         data = json.dumps(
             val,
@@ -196,35 +283,30 @@ def save_json(val, pretty=False, sort=True, encoder=None):
             sort_keys=sort,
             cls=encoder
         )
-    if not sys.version_info > (3, 0) and isinstance(data, str):
-        data = data.decode("utf-8")
+
     return data
 
 
 def save_json_file(
-        file, val,
-        pretty=False, compact=True, sort=True, encoder=None
-):
+        file: Union[TextIO, str, Path], val: Any,
+        pretty: bool = False, compact: bool = True, sort: bool = True,
+        encoder: Optional[Type[DateTimeEncoder]] = None
+) -> None:
     """
     Save data to json file
 
     :param file: Writable object or path to file
-    :type file: FileIO | str | unicode
     :param val: Value or struct to save
-    :type val: None | int | float | str | list | dict
     :param pretty: Format data to be readable (default: False)
-    :type pretty: bool
     :param compact: Format data to be compact (default: True)
-    :type compact: bool
     :param sort: Sort keys (default: True)
-    :type sort: bool
     :param encoder: Use custom json encoder
     :type encoder: T <= DateTimeEncoder
-    :rtype: None
     """
     # TODO: make pretty/compact into one bool?
     if encoder is None:
         encoder = DateTimeEncoder
+
     opened = False
 
     if not hasattr(file, "write"):
@@ -249,61 +331,56 @@ def save_json_file(
             )
         else:
             data = json.dumps(val, sort_keys=sort, cls=encoder)
-        if not sys.version_info > (3, 0) and isinstance(data, str):
-            data = data.decode("utf-8")
+
         file.write(data)
     finally:
         if opened:
+            # For type hinting
+            assert isinstance(file, TextIO)  # nosec B101
+
             file.close()
 
 
-def load_yaml(data):
+def load_yaml(data: str) -> TYPE_ALL:
     """
     Load data from yaml string
 
     :param data: Stringified yaml object
-    :type data: str | unicode
     :return: Yaml data
-    :rtype: None | int | float | str | unicode | list | dict
     """
-    return yaml.load(data, yaml.FullLoader)
+    return yaml.safe_load(data)
 
 
-def load_yaml_file(file):
+def load_yaml_file(file: Union[TextIO, str, Path]) -> TYPE_ALL:
     """
     Load data from yaml file
 
     :param file: Readable object or path to file
-    :type file: FileIO | str | unicode
     :return: Yaml data
-    :rtype: None | int | float | str | unicode | list | dict
     """
     if not hasattr(file, "read"):
         with io.open(file, "r", encoding="utf-8") as f:
-            return yaml.load(f, yaml.FullLoader)
-    return yaml.load(file, yaml.FullLoader)
+            return yaml.safe_load(f)
+
+    return yaml.safe_load(file)
 
 
-def save_yaml(val):
+def save_yaml(val: TYPE_ALL) -> str:
     """
     Save data to yaml string
 
     :param val: Value or struct to save
-    :type val: None | int | float | str | unicode | list | dict
     :return: The yamlified string
-    :rtype: str | unicode
     """
-    return yaml.dump(val)
+    return yaml.safe_dump(val)
 
 
-def save_yaml_file(file, val):
+def save_yaml_file(file: Union[TextIO, str, Path], val: TYPE_ALL) -> None:
     """
     Save data to yaml file
 
     :param file: Writable object or path to file
-    :type file: FileIO | str | unicode
     :param val: Value or struct to save
-    :type val: None | int | float | str | unicode | list | dict
     """
     opened = False
 
@@ -312,62 +389,64 @@ def save_yaml_file(file, val):
         opened = True
 
     try:
-        yaml.dump(val, file)
+        yaml.safe_dump(val, file)
     finally:
         if opened:
+            # For type hinting
+            assert isinstance(file, TextIO)  # nosec B101
+
             file.close()
 
 
-def load_file(path):
+def load_file(path: Union[str, Path]) -> Union[TYPE_ALL, TYPE_DATETIME]:
     """
     Load file
 
     :param path: Path to file
-    :type path: str | unicode
     :return: Loaded data
-    :rtype: None | int | float | str | unicode | list | dict
     :raises IOError: If file not found or error accessing file
     """
-    res = {}
+    res: Union[TYPE_ALL, TYPE_DATETIME] = None
 
     if not path:
         IOError("No path specified to save")
 
-    if not os.path.isfile(path):
+    p = Path(path)
+
+    if not p.is_file():
         raise IOError("File not found {}".format(path))
 
     try:
-        with io.open(path, "r", encoding="utf-8") as f:
-            if path.endswith(".json"):
+        with p.open("r", encoding="utf-8") as f:
+            if p.suffix.lower() == ".json":
                 res = load_json_file(f)
-            elif path.endswith(".yaml") or path.endswith(".yml"):
+            elif p.suffix.lower() == ".yaml" or p.suffix.lower() == ".yml":
                 res = load_yaml_file(f)
     except IOError:
         raise
     except Exception as e:
         raise IOError(e)
+
     return res
 
 
-def save_file(path, data, readable=False):
+def save_file(path: Union[str, Path], data: TYPE_ALL, readable: bool = False) -> None:
     """
     Save to file
 
     :param path: File path to save
-    :type path: str | unicode
     :param data: Data to save
-    :type data: None | int | float | str | unicode | list | dict
     :param readable: Format file to be human readable (default: False)
-    :type readable: bool
-    :rtype: None
     :raises IOError: If empty path or error writing file
     """
     if not path:
         IOError("No path specified to save")
 
+    p = Path(path)
+
     try:
-        with io.open(path, "w", encoding="utf-8") as f:
-            if path.endswith(".json"):
+        with p.open("w", encoding="utf-8") as f:
+            if p.suffix.lower() == ".json":
                 save_json_file(
                     f,
                     data,
@@ -375,7 +454,7 @@ def save_file(path, data, readable=False):
                     compact=(not readable),
                     sort=True
                 )
-            elif path.endswith(".yaml") or path.endswith(".yml"):
+            elif p.suffix.lower() == ".yaml" or p.suffix.lower() == ".yml":
                 save_yaml_file(f, data)
     except IOError:
         raise
@@ -383,43 +462,42 @@ def save_file(path, data, readable=False):
         raise IOError(e)
 
 
-def join_path_prefix(path, pre_path=None):
+def join_path_prefix(
+        path: Union[str, Path], pre_path: Optional[Union[str, Path]] = None
+) -> Optional[Path]:
     """
     If path set and not absolute, append it to pre path (if used)
 
     :param path: path to append
-    :type path: str | None
     :param pre_path: Base path to append to (default: None)
-    :type pre_path: None | str
     :return: Path or appended path
-    :rtype: str | None
     """
-    if not path:
+    if path is None:
         return path
 
-    if pre_path and not os.path.isabs(path):
-        return os.path.join(pre_path, path)
+    p = Path(path)
 
-    return path
+    if pre_path is not None and not p.is_absolute():
+        return Path(pre_path) / p
+
+    return p
 
 
 class Loadable(Logable):
-    """
-    Class to facilitate loading config from json-files and ease relative paths
-    """
+    """ Class to facilitate loading config from json-files and ease relative paths """
 
-    def __init__(self, settings=None):
+    def __init__(self, settings: Optional[Dict[str, Any]] = None):
         """
         Initialize object
 
         :param settings: Settings for instance (default: None)
-        :type settings: dict | None
-        :rtype: None
         :raises IOError: Failed to load settings file
         """
         if settings is None:
             settings = {}
-        super(Loadable, self).__init__(settings)
+
+        super().__init__(settings)
+
         sett_path = settings.get('settings_file', None)
         self._pre_path = settings.get('path_prefix', None)
 
@@ -427,173 +505,159 @@ class Loadable(Logable):
             sett_path = self.join_path_prefix(sett_path)
             sett = self.load_settings(sett_path)
             sett_prepath = sett.get('path_prefix')
+
             if sett_prepath:
                 # if sett_path is absolute path
                 # -> set to sett_path else join with dict path_prefix
                 self._pre_path = self.join_path_prefix(sett_prepath)
+
             # settings in constructor overwrite settings from file
             sett.update(settings)
             settings.update(sett)
-            self.debug("Loaded config {}".format(sett_path))
+            self.debug(f"Loaded config {sett_path}")
             # to apply loaded settings to logable as well
             super(Loadable, self).__init__(settings)
 
-    @property
-    def _prePath(self):
-        import warnings
-        warnings.warn(
-            "This variable is no longer in use - Please use _pre_path instead",
-            DeprecationWarning
-        )
-        return self._pre_path
-
-    @_prePath.setter
-    def set_prePath(self, value):
-        import warnings
-        warnings.warn(
-            "This variable is no longer in use - Please use _pre_path instead",
-            DeprecationWarning
-        )
-        self._pre_path = value
-
-    def join_path_prefix(self, path):
+    def join_path_prefix(self, path: Optional[Union[str, Path]]) -> Optional[Path]:
         """
         If path set and not absolute, append it to self._pre_path
 
         :param path: Path to append
-        :type path: str | None
         :return: Path or appended path
-        :rtype: str | None
         """
+        if path is None:
+            return None
+
         return join_path_prefix(path, self._pre_path)
 
-    def _load_json_file(self, file, decoder=None):
+    def _load_json_file(
+            self,
+            file: Union[TextIO, str, Path],
+            decoder: Optional[Type[DateTimeDecoder]] = None,
+    ) -> Any:
         """
         Load data from json file
 
         :param file: Readable file or path to file
-        :type file: FileIO | str | unicode
         :param decoder: Use custom json decoder
         :type decoder: T <= flotils.loadable.DateTimeDecoder
         :return: Json data
-        :rtype: None | int | float | str | list | dict
         :raises IOError: Failed to load
         """
         try:
             res = load_json_file(file, decoder=decoder)
         except ValueError as e:
-            if "{}".format(e) == "No JSON object could be decoded":
+            if f"{e}" == "No JSON object could be decoded":
                 raise IOError("Decoding JSON failed")
-            self.exception("Failed to load from {}".format(file))
+
+            self.exception(f"Failed to load from {file}")
+
             raise IOError("Loading file failed")
-        except:
-            self.exception("Failed to load from {}".format(file))
+        except Exception:
+            self.exception(f"Failed to load from {file}")
+
             raise IOError("Loading file failed")
+
         return res
 
     def _save_json_file(
-        self, file, val,
-        pretty=False, compact=True, sort=True, encoder=None
-    ):
+        self,
+            file: Union[TextIO, str, Path], val: Any,
+            pretty: bool = False, compact: bool = True, sort: bool = True,
+            encoder: Optional[Type[DateTimeEncoder]] = None
+    ) -> None:
         """
         Save data to json file
 
-        :param file: Writable file or path to file
-        :type file: FileIO | str | unicode
+        :param file: Writable object or path to file
         :param val: Value or struct to save
-        :type val: None | int | float | str | list | dict
         :param pretty: Format data to be readable (default: False)
-        :type pretty: bool
         :param compact: Format data to be compact (default: True)
-        :type compact: bool
         :param sort: Sort keys (default: True)
-        :type sort: bool
         :param encoder: Use custom json encoder
-        :type encoder: T <= flotils.loadable.DateTimeEncoder
-        :rtype: None
+        :type encoder: T <= DateTimeEncoder
         :raises IOError: Failed to save
         """
         try:
             save_json_file(file, val, pretty, compact, sort, encoder)
-        except:
-            self.exception("Failed to save to {}".format(file))
+        except Exception:
+            self.exception(f"Failed to save to {file}")
+
             raise IOError("Saving file failed")
 
-    def _load_yaml_file(self, file):
+    def _load_yaml_file(self, file: Union[TextIO, str, Path]) -> TYPE_ALL:
         """
         Load data from yaml file
 
         :param file: Readable object or path to file
-        :type file: FileIO | str | unicode
         :return: Yaml data
-        :rtype: None | int | float | str | unicode | list | dict
         :raises IOError: Failed to load
         """
         try:
             res = load_yaml_file(file)
-        except:
-            self.exception("Failed to load from {}".format(file))
+        except Exception:
+            self.exception(f"Failed to load from {file}")
+
             raise IOError("Loading file failed")
+
         return res
 
-    def _save_yaml_file(self, file, val):
+    def _save_yaml_file(self, file: Union[TextIO, str, Path], val: TYPE_ALL) -> None:
         """
         Save data to yaml file
 
         :param file: Writable object or path to file
-        :type file: FileIO | str | unicode
         :param val: Value or struct to save
-        :type val: None | int | float | str | unicode | list | dict
         :raises IOError: Failed to save
         """
         try:
             save_yaml_file(file, val)
-        except:
-            self.exception("Failed to save to {}".format(file))
+        except Exception:
+            self.exception(f"Failed to save to {file}")
+
             raise IOError("Saving file failed")
 
-    def load_settings(self, path):
+    def load_settings(self, path: Union[str, Path]) -> Dict[str, Any]:
         """
         Load settings dict
 
         :param path: Path to settings file
-        :type path: str | unicode
         :return: Loaded settings
-        :rtype: dict
         :raises IOError: If file not found or error accessing file
         :raises TypeError: Settings file does not contain dict
         """
         res = self.load_file(path)
+
         if not isinstance(res, dict):
             raise TypeError("Expected settings to be dict")
+
         return res
 
-    def save_settings(self, path, settings, readable=False):
+    def save_settings(
+            self, path: Union[str, Path],
+            settings: Dict[str, Any],
+            readable: bool = False
+    ) -> None:
         """
         Save settings to file
 
         :param path: File path to save
-        :type path: str | unicode
         :param settings: Settings to save
-        :type settings: dict
-        :param readable: Format file to be human readable (default: False)
-        :type readable: bool
-        :rtype: None
+        :param readable: Format file to be human-readable (default: False)
         :raises IOError: If empty path or error writing file
         :raises TypeError: Settings is not a dict
         """
         if not isinstance(settings, dict):
             raise TypeError("Expected settings to be dict")
+
         return self.save_file(path, settings, readable)
 
-    def load_file(self, path):
+    def load_file(self, path: Union[str, Path]) -> Union[TYPE_ALL, TYPE_DATETIME]:
         """
         Load file
 
         :param path: Path to file
-        :type path: str | unicode
         :return: Loaded settings
-        :rtype: None | str | unicode | int | list | dict
         :raises IOError: If file not found or error accessing file
         """
         res = None
@@ -601,52 +665,59 @@ class Loadable(Logable):
         if not path:
             IOError("No path specified to save")
 
-        if not os.path.isfile(path):
-            raise IOError("File not found {}".format(path))
+        p = Path(path)
+
+        if not p.is_file():
+            raise IOError(f"File not found {p}")
 
         try:
-            with io.open(path, "r", encoding="utf-8") as f:
-                if path.endswith(".json"):
+            with p.open("r", encoding="utf-8") as f:
+                if p.suffix.lower() == ".json":
                     res = self._load_json_file(f)
-                elif path.endswith(".yaml") or path.endswith(".yml"):
+                elif p.suffix.lower() == ".yaml" or p.suffix.lower() == ".yml":
                     res = self._load_yaml_file(f)
         except IOError:
             raise
         except Exception as e:
-            self.exception("Failed reading {}".format(path))
+            self.exception(f"Failed reading {p}")
+
             raise IOError(e)
+
         return res
 
-    def save_file(self, path, data, readable=False):
+    def save_file(
+            self, path: Union[str, Path],
+            data: TYPE_ALL,
+            readable: bool = False
+    ) -> None:
         """
         Save to file
 
         :param path: File path to save
-        :type path: str | unicode
         :param data: To save
-        :type data: None | str | unicode | int | list | dict
-        :param readable: Format file to be human readable (default: False)
-        :type readable: bool
-        :rtype: None
+        :param readable: Format file to be human-readable (default: False)
         :raises IOError: If empty path or error writing file
         """
         if not path:
             IOError("No path specified to save")
 
+        p = Path(path)
+
         try:
-            with io.open(path, "w", encoding="utf-8") as f:
-                if path.endswith(".json"):
+            with p.open("w", encoding="utf-8") as f:
+                if p.suffix.lower() == ".json":
                     self._save_json_file(
                         f,
                         data,
                         pretty=readable,
                         compact=(not readable),
-                        sort=True
+                        sort=True,
                     )
-                elif path.endswith(".yaml") or path.endswith(".yml"):
+                elif p.suffix.lower() == ".yaml" or p.suffix.lower() == ".yml":
                     self._save_yaml_file(f, data)
         except IOError:
             raise
         except Exception as e:
-            self.exception("Failed writing {}".format(path))
+            self.exception(f"Failed writing {p}")
+
             raise IOError(e)
