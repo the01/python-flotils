@@ -163,13 +163,13 @@ pytest:3.11:
     - master
     - tags
 
-pytest:3.12:
-  extends:
-    - .pytest
-  image: python:3.12
-  only:
-    - master
-    - tags
+#pytest:3.12:
+#  extends:
+#    - .pytest
+#  image: python:3.12
+#  only:
+#    - master
+#    - tags
 
 
 .deploy:
