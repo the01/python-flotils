@@ -20,6 +20,9 @@ lib
 lib64
 env
 venv
+.pytest_cache
+.mypy_cache
+reports
 
 # Installer logs
 pip-log.txt
