@@ -1,26 +1,16 @@
 # -*- coding: UTF-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
-__author__ = "d01"
-__email__ = "jungflor@gmail.com"
-__copyright__ = "Copyright (C) 2019, Florian JUNG"
-__license__ = "MIT"
-__version__ = "0.1.0"
-__date__ = "2019-03-26"
-# Created: 2019-03-21 16:02
 
 import datetime
+import logging
+from pathlib import Path
 
-import flotils
+from flotils.loadable import save_file, load_file, DateTimeEncoder, DateTimeDecoder
 
 
-logger = flotils.get_logger()
+logger = logging.getLogger(__name__)
 
 
-def test_save_load_json():
+def test_save_load_json(tmp_path: Path):
     now = datetime.datetime.utcnow()
     delta = datetime.timedelta(
         days=1, hours=1, seconds=1
@@ -31,19 +21,43 @@ def test_save_load_json():
         'delta': delta,
         'time': now.time(),
     }
-    flotils.save_file("tmp/file.json", data, readable=True)
-    loaded = flotils.load_file("tmp/file.json")
+    tmp_file = tmp_path / "file.json"
+    save_file(tmp_file, data, readable=True)
+    loaded = load_file(tmp_file)
+
     assert now == loaded['datetime']
     assert now.date() == loaded['date']
     assert delta == loaded['delta']
     assert now.time() == loaded['time']
 
 
-if __name__ == "__main__":
-    import logging.config
-    from flotils.logable import default_logging_config
+def test_encode_datetime():
+    now = datetime.datetime(2023, 10, 17, 1, 4, 36)
 
-    logging.config.dictConfig(default_logging_config)
-    logging.getLogger().setLevel(logging.DEBUG)
+    result = DateTimeEncoder().encode(now)
 
-    test_save_load_json()
+    assert result == '{"__type__": "datetime", "__value__": "2023-10-17T01:04:36Z"}'
+
+
+def test_encode_time():
+    now = datetime.time(3, 55, 17, 1, )
+
+    result = DateTimeEncoder().encode(now)
+
+    assert result == '{"__type__": "time", "__value__": "03:55:17.000001"}'
+
+
+def test_decode_datetime():
+    result = DateTimeDecoder.decode({
+        "__type__": "datetime", "__value__": "2023-10-17T01:04:36Z"
+    })
+
+    assert result == datetime.datetime(2023, 10, 17, 1, 4, 36)
+
+
+def test_decode_datetime_deprecated():
+    result = DateTimeDecoder.decode({
+        "__datetime__": "2023-10-17T01:04:36Z"
+    })
+
+    assert result == datetime.datetime(2023, 10, 17, 1, 4, 36)
